@@ -177,15 +177,28 @@ async function predict(){
       body: JSON.stringify(payload)
     });
     
+    // Obtener datos históricos
+    const resHistoricos = await fetch("/api/historical-data", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    
     let dataCorners = null;
     if(resCorners.ok) {
       dataCorners = await resCorners.json();
     }
     
+    let dataHistoricos = null;
+    if(resHistoricos.ok) {
+      dataHistoricos = await resHistoricos.json();
+    }
+    
     // Combinar resultados
     const combinedData = {
       ...dataResultado,
-      corners_data: dataCorners
+      corners_data: dataCorners,
+      historicos: dataHistoricos
     };
     
     renderResults(combinedData);
@@ -273,6 +286,40 @@ function renderResults(res){
       console.log(`Nota corners: ${res.corners_data.prediction_note}`);
     } else {
       cornersTotalesEl.textContent = "—";
+    }
+    
+    // Mostrar datos históricos si están disponibles
+    if (res.historicos) {
+      const hist = res.historicos;
+      
+
+      
+      // Datos del enfrentamiento histórico
+      if (hist.enfrentamiento_historico) {
+        const enf = hist.enfrentamiento_historico;
+        
+        document.getElementById('totalEnfrentamientos').textContent = enf.total_partidos;
+        document.getElementById('promedioGolesEnfrentamiento').textContent = 
+          `${enf.goles_promedio.toFixed(2)} por partido`;
+
+        document.getElementById('victoriasLocal').textContent = enf.victorias_local;
+        document.getElementById('empates').textContent = enf.empates;
+        document.getElementById('victoriasVisitante').textContent = enf.victorias_visitante;
+        document.getElementById('posesionLocalHist').textContent = Math.round(enf.posesion_local_promedio) + '%';
+        document.getElementById('posesionVisitanteHist').textContent = Math.round(enf.posesion_visitante_promedio) + '%';
+      }
+      
+      console.log('📊 Datos históricos cargados:', hist);
+    } else {
+      // Limpiar datos históricos si no están disponibles
+      document.getElementById('totalEnfrentamientos').textContent = "—";
+      document.getElementById('promedioGolesEnfrentamiento').textContent = "—";
+      document.getElementById('posesionLocalHist').textContent = "—";
+      document.getElementById('posesionVisitanteHist').textContent = "—";
+      document.getElementById('victoriasLocal').textContent = "—";
+      document.getElementById('empates').textContent = "—";
+      document.getElementById('victoriasVisitante').textContent = "—";
+
     }
   } else {
     // Limpiar si no hay datos

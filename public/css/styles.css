@@ -211,3 +211,77 @@ body{
   font-weight:800;
   font-size:1.6rem;
 }
+
+/* --- DATOS HISTÓRICOS --- */
+.historical-data{
+  margin-top:24px;
+  border-top:1px solid var(--stroke);
+  padding-top:20px;
+}
+
+.historical-data h3{
+  font-size:1.1rem;
+  font-weight:700;
+  color:var(--text);
+  margin-bottom:16px;
+  text-align:center;
+}
+
+.historical-grid{
+  display:grid;
+  gap:12px;
+  grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.historical-card{
+  border:1px solid var(--stroke);
+  background:rgba(255,255,255,.06);
+  border-radius:16px;
+  padding:14px 16px;
+}
+
+.historical-title{
+  font-size:.85rem;
+  color:var(--muted);
+  text-transform:uppercase;
+  letter-spacing:.1em;
+  margin-bottom:10px;
+  text-align:center;
+}
+
+.historical-dual{
+  display:grid;
+  grid-template-columns:repeat(2, minmax(0,1fr));
+  gap:16px;
+  align-items:center;
+}
+
+.historical-triple{
+  display:grid;
+  grid-template-columns:repeat(3, minmax(0,1fr));
+  gap:12px;
+  align-items:center;
+}
+
+.historical-single{
+  text-align:center;
+}
+
+.historical-item{
+  text-align:center;
+}
+
+.historical-label{
+  font-size:.75rem;
+  color:var(--muted);
+  text-transform:uppercase;
+  letter-spacing:.08em;
+  margin-bottom:4px;
+}
+
+.historical-value{
+  font-size:1.2rem;
+  font-weight:700;
+  color:var(--text);
+  font-variant-numeric:tabular-nums;
+}

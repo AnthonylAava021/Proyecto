@@ -105,6 +105,131 @@ def get_historical_data(fecha_corte=None):
     finally:
         connection.close()
 
+def get_average_result_data(equipo_local_id, equipo_visitante_id, fecha_corte=None):
+    """
+    Obtener el promedio de todos los registros de un enfrentamiento específico en ganador_resultado_tabla
+    """
+    connection = get_db_connection()
+    if not connection:
+        return None
+    
+    try:
+        with connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cursor:
+            # Construir la consulta con filtro de fecha si se proporciona
+            fecha_filter = ""
+            params = [equipo_local_id, equipo_visitante_id]
+            
+            if fecha_corte:
+                fecha_filter = "AND fecha < %s"
+                params.append(fecha_corte)
+            
+            # Buscar enfrentamiento directo y calcular promedios
+            sql = f"""
+            SELECT 
+                AVG(ataques_visitante) as ataques_visitante,
+                AVG(intentos_a_porteria_local) as intentos_a_porteria_local,
+                AVG(fuera_de_juego_local) as fuera_de_juego_local,
+                AVG(posesion_local) as posesion_local,
+                AVG(corners_visitante) as corners_visitante,
+                AVG(corners_local) as corners_local,
+                AVG(tarjetas_amarillas_totales) as tarjetas_amarillas_totales,
+                AVG(ataques_peligrosos_local) as ataques_peligrosos_local,
+                AVG(ataques_local) as ataques_local,
+                AVG(faltas_local) as faltas_local,
+                AVG(posesion_visitante) as posesion_visitante,
+                AVG(atajadas_visitante) as atajadas_visitante,
+                AVG(intentos_a_porteria_visitante) as intentos_a_porteria_visitante,
+                AVG(tiros_fuera_visitante) as tiros_fuera_visitante,
+                AVG(tarjetas_rojas_visitante) as tarjetas_rojas_visitante,
+                AVG(ataques_peligrosos_visitante) as ataques_peligrosos_visitante,
+                AVG(tarjetas_rojas_totales) as tarjetas_rojas_totales,
+                AVG(tarjetas_rojas_local) as tarjetas_rojas_local,
+                AVG(tarjetas_amarillas_local) as tarjetas_amarillas_local,
+                AVG(faltas_visitante) as faltas_visitante,
+                AVG(faltas_totales) as faltas_totales,
+                AVG(tiros_fuera_local) as tiros_fuera_local,
+                AVG(tarjetas_totales) as tarjetas_totales,
+                AVG(tarjetas_amarillas_visitante) as tarjetas_amarillas_visitante,
+                AVG(tiros_esquina_totales) as tiros_esquina_totales,
+                AVG(penales_visitante) as penales_visitante,
+                AVG(tiros_a_puerta_visitante) as tiros_a_puerta_visitante,
+                AVG(tiros_bloqueados_visitante) as tiros_bloqueados_visitante,
+                AVG(tiros_a_puerta_local) as tiros_a_puerta_local,
+                AVG(fuera_de_juego_visitante) as fuera_de_juego_visitante,
+                AVG(tiros_bloqueados_local) as tiros_bloqueados_local,
+                AVG(atajadas_local) as atajadas_local,
+                AVG(penales_local) as penales_local,
+                COUNT(*) as num_partidos
+            FROM ganador_resultado_tabla 
+            WHERE equipo_local_id = %s AND equipo_visitante_id = %s {fecha_filter}
+            """
+            cursor.execute(sql, params)
+            result = cursor.fetchone()
+            
+            if result and result['num_partidos'] > 0:
+                print(f"📊 Encontrados {result['num_partidos']} partidos directos (resultados)")
+                return dict(result)
+            
+            # Si no existe, buscar enfrentamiento inverso y calcular promedios
+            params = [equipo_visitante_id, equipo_local_id]
+            if fecha_corte:
+                params.append(fecha_corte)
+            
+            sql = f"""
+            SELECT 
+                AVG(ataques_visitante) as ataques_visitante,
+                AVG(intentos_a_porteria_local) as intentos_a_porteria_local,
+                AVG(fuera_de_juego_local) as fuera_de_juego_local,
+                AVG(posesion_local) as posesion_local,
+                AVG(corners_visitante) as corners_visitante,
+                AVG(corners_local) as corners_local,
+                AVG(tarjetas_amarillas_totales) as tarjetas_amarillas_totales,
+                AVG(ataques_peligrosos_local) as ataques_peligrosos_local,
+                AVG(ataques_local) as ataques_local,
+                AVG(faltas_local) as faltas_local,
+                AVG(posesion_visitante) as posesion_visitante,
+                AVG(atajadas_visitante) as atajadas_visitante,
+                AVG(intentos_a_porteria_visitante) as intentos_a_porteria_visitante,
+                AVG(tiros_fuera_visitante) as tiros_fuera_visitante,
+                AVG(tarjetas_rojas_visitante) as tarjetas_rojas_visitante,
+                AVG(ataques_peligrosos_visitante) as ataques_peligrosos_visitante,
+                AVG(tarjetas_rojas_totales) as tarjetas_rojas_totales,
+                AVG(tarjetas_rojas_local) as tarjetas_rojas_local,
+                AVG(tarjetas_amarillas_local) as tarjetas_amarillas_local,
+                AVG(faltas_visitante) as faltas_visitante,
+                AVG(faltas_totales) as faltas_totales,
+                AVG(tiros_fuera_local) as tiros_fuera_local,
+                AVG(tarjetas_totales) as tarjetas_totales,
+                AVG(tarjetas_amarillas_visitante) as tarjetas_amarillas_visitante,
+                AVG(tiros_esquina_totales) as tiros_esquina_totales,
+                AVG(penales_visitante) as penales_visitante,
+                AVG(tiros_a_puerta_visitante) as tiros_a_puerta_visitante,
+                AVG(tiros_bloqueados_visitante) as tiros_bloqueados_visitante,
+                AVG(tiros_a_puerta_local) as tiros_a_puerta_local,
+                AVG(fuera_de_juego_visitante) as fuera_de_juego_visitante,
+                AVG(tiros_bloqueados_local) as tiros_bloqueados_local,
+                AVG(atajadas_local) as atajadas_local,
+                AVG(penales_local) as penales_local,
+                COUNT(*) as num_partidos
+            FROM ganador_resultado_tabla 
+            WHERE equipo_local_id = %s AND equipo_visitante_id = %s {fecha_filter}
+            """
+            cursor.execute(sql, params)
+            result = cursor.fetchone()
+            
+            if result and result['num_partidos'] > 0:
+                print(f"📊 Encontrados {result['num_partidos']} partidos inversos (resultados)")
+                return dict(result)
+            
+            print("❌ No se encontraron partidos históricos para este enfrentamiento (resultados)")
+            return None
+            
+    except Exception as e:
+        print(f"Error en consulta de resultados: {e}")
+        return None
+    finally:
+        connection.close()
+
 def get_team_stats(df_corte, equipo_id, is_local=True):
     """
     Calcular estadísticas de un equipo basado en datos históricos
@@ -149,27 +274,18 @@ def get_team_stats(df_corte, equipo_id, is_local=True):
 
 def prepare_features(equipo_local_id, equipo_visitante_id, fecha_corte=None):
     """
-    Preparar características para el modelo de predicción de resultados
+    Preparar características para el modelo de predicción de resultados usando promedios
     """
-    # Obtener datos históricos hasta la fecha de corte
-    historical_data = get_historical_data(fecha_corte)
-    if historical_data is None:
+    # Obtener datos promedio del enfrentamiento específico
+    match_data = get_average_result_data(equipo_local_id, equipo_visitante_id, fecha_corte)
+    
+    if not match_data:
         return None, None
-    
-    # Convertir a DataFrame
-    df_corte = pd.DataFrame(historical_data)
-    
-    if df_corte.empty:
-        return None, None
-    
-    # Calcular estadísticas de ambos equipos
-    local_stats = get_team_stats(df_corte, equipo_local_id, is_local=True)
-    away_stats = get_team_stats(df_corte, equipo_visitante_id, is_local=False)
     
     # Obtener las características esperadas del modelo
     expected_features = model_resultados['feature_columns'].tolist()
     
-    # Crear características para el modelo con valores por defecto
+    # Crear características para el modelo usando los promedios reales
     features = {}
     for feature in expected_features:
         if feature == 'equipo_local_id':
@@ -177,26 +293,19 @@ def prepare_features(equipo_local_id, equipo_visitante_id, fecha_corte=None):
         elif feature == 'equipo_visitante_id':
             features[feature] = equipo_visitante_id
         else:
-            # Para otras características, usar valores por defecto basados en estadísticas
-            if 'local' in feature:
-                if 'goles' in feature:
-                    features[feature] = local_stats.get('goles_promedio', 1.0)
-                elif 'posesion' in feature:
-                    features[feature] = 50.0  # Valor por defecto
-                else:
-                    features[feature] = 5.0  # Valor por defecto para otras métricas
-            elif 'visitante' in feature:
-                if 'goles' in feature:
-                    features[feature] = away_stats.get('goles_promedio', 1.0)
-                elif 'posesion' in feature:
-                    features[feature] = 50.0  # Valor por defecto
-                else:
-                    features[feature] = 5.0  # Valor por defecto para otras métricas
+            # Usar los valores promedio reales de la base de datos
+            if feature in match_data and match_data[feature] is not None:
+                features[feature] = float(match_data[feature])
             else:
-                # Para características totales
-                features[feature] = 10.0  # Valor por defecto
+                # Valor por defecto si no existe
+                features[feature] = 5.0
     
     features_array = np.array([[features[col] for col in expected_features]])
+    
+    print(f"🔢 Características extraídas: {len(expected_features)} features")
+    print(f"📋 Features disponibles: {expected_features}")
+    
+    return features_array, expected_features
     
     return features_array, expected_features
 
@@ -227,7 +336,7 @@ def predict_match_result(equipo_local_id, equipo_visitante_id, fecha_corte=None)
     
     if features is None:
         return {
-            'error': 'Error preparando características para el modelo',
+            'error': 'Error preparando características para el modelo (promedio de partidos)',
             'goles_local': None,
             'goles_visitante': None,
             'resultado_1x2': None
@@ -293,9 +402,9 @@ def predict_match_result(equipo_local_id, equipo_visitante_id, fecha_corte=None)
             'resultado_1x2': None
         }
 
-def get_last_match_data(equipo_local_id, equipo_visitante_id):
+def get_average_match_data(equipo_local_id, equipo_visitante_id):
     """
-    Obtener el último registro de un enfrentamiento específico
+    Obtener el promedio de todos los registros de un enfrentamiento específico
     """
     connection = get_db_connection()
     if not connection:
@@ -303,32 +412,67 @@ def get_last_match_data(equipo_local_id, equipo_visitante_id):
     
     try:
         with connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cursor:
-            # Buscar enfrentamiento directo
+            # Buscar enfrentamiento directo y calcular promedios
             sql = """
-            SELECT * FROM corners_tabla 
-            WHERE equipo_local_id = %s AND equipo_visitante_id = %s 
-            ORDER BY fecha DESC 
-            LIMIT 1
+            SELECT 
+                AVG(consistencia_corners_local) as consistencia_corners_local,
+                AVG(corners_por_ataque_peligroso) as corners_por_ataque_peligroso,
+                AVG(corners_vs_rival_hist) as corners_vs_rival_hist,
+                AVG(diff_corners_equipo) as diff_corners_equipo,
+                AVG(diff_corners_local) as diff_corners_local,
+                AVG(diff_corners_visitante) as diff_corners_visitante,
+                AVG(local_avg_last3) as local_avg_last3,
+                AVG(local_avg_last5) as local_avg_last5,
+                AVG(visitante_avg_last3) as visitante_avg_last3,
+                AVG(visitante_avg_last5) as visitante_avg_last5,
+                AVG(local_corner_category) as local_corner_category,
+                AVG(visitante_corner_category) as visitante_corner_category,
+                AVG(diff_last3_vs_last5_local) as diff_last3_vs_last5_local,
+                AVG(diff_last3_vs_last5_visitante) as diff_last3_vs_last5_visitante,
+                AVG(tiros_bloqueados_local) as tiros_bloqueados_local,
+                AVG(last3_vs_media_liga) as last3_vs_media_liga,
+                COUNT(*) as num_partidos
+            FROM corners_tabla 
+            WHERE equipo_local_id = %s AND equipo_visitante_id = %s
             """
             cursor.execute(sql, (equipo_local_id, equipo_visitante_id))
             result = cursor.fetchone()
             
-            if result:
+            if result and result['num_partidos'] > 0:
+                print(f"📊 Encontrados {result['num_partidos']} partidos directos")
                 return dict(result)
             
-            # Si no existe, buscar enfrentamiento inverso
+            # Si no existe, buscar enfrentamiento inverso y calcular promedios
             sql = """
-            SELECT * FROM corners_tabla 
-            WHERE equipo_local_id = %s AND equipo_visitante_id = %s 
-            ORDER BY fecha DESC 
-            LIMIT 1
+            SELECT 
+                AVG(consistencia_corners_local) as consistencia_corners_local,
+                AVG(corners_por_ataque_peligroso) as corners_por_ataque_peligroso,
+                AVG(corners_vs_rival_hist) as corners_vs_rival_hist,
+                AVG(diff_corners_equipo) as diff_corners_equipo,
+                AVG(diff_corners_local) as diff_corners_local,
+                AVG(diff_corners_visitante) as diff_corners_visitante,
+                AVG(local_avg_last3) as local_avg_last3,
+                AVG(local_avg_last5) as local_avg_last5,
+                AVG(visitante_avg_last3) as visitante_avg_last3,
+                AVG(visitante_avg_last5) as visitante_avg_last5,
+                AVG(local_corner_category) as local_corner_category,
+                AVG(visitante_corner_category) as visitante_corner_category,
+                AVG(diff_last3_vs_last5_local) as diff_last3_vs_last5_local,
+                AVG(diff_last3_vs_last5_visitante) as diff_last3_vs_last5_visitante,
+                AVG(tiros_bloqueados_local) as tiros_bloqueados_local,
+                AVG(last3_vs_media_liga) as last3_vs_media_liga,
+                COUNT(*) as num_partidos
+            FROM corners_tabla 
+            WHERE equipo_local_id = %s AND equipo_visitante_id = %s
             """
             cursor.execute(sql, (equipo_visitante_id, equipo_local_id))
             result = cursor.fetchone()
             
-            if result:
+            if result and result['num_partidos'] > 0:
+                print(f"📊 Encontrados {result['num_partidos']} partidos inversos")
                 return dict(result)
             
+            print("❌ No se encontraron partidos históricos para este enfrentamiento")
             return None
             
     except Exception as e:
@@ -344,18 +488,41 @@ def prepare_corners_features(match_data):
     if not match_data:
         return None, None
     
-    # Columnas a excluir (no son características numéricas)
-    exclude_columns = ['id', 'fecha', 'equipo_local_id', 'equipo_visitante_id']
+    # Columnas que realmente existen en la base de datos
+    expected_columns = [
+        'consistencia_corners_local',
+        'corners_por_ataque_peligroso',
+        'corners_vs_rival_hist',
+        'diff_corners_equipo',
+        'diff_corners_local',
+        'diff_corners_visitante',
+        'local_avg_last3',
+        'local_avg_last5',
+        'visitante_avg_last3',
+        'visitante_avg_last5',
+        'local_corner_category',
+        'visitante_corner_category',
+        'diff_last3_vs_last5_local',
+        'diff_last3_vs_last5_visitante',
+        'tiros_bloqueados_local',
+        'last3_vs_media_liga'
+    ]
     
-    # Extraer características numéricas
+    # Extraer características específicas
     features = {}
-    for key, value in match_data.items():
-        if key not in exclude_columns and isinstance(value, (int, float)):
-            features[key] = value
+    for col in expected_columns:
+        if col in match_data and match_data[col] is not None:
+            features[col] = float(match_data[col])
+        else:
+            # Valor por defecto si no existe
+            features[col] = 0.0
     
     # Ordenar características para mantener consistencia
     feature_columns = sorted(features.keys())
     features_array = np.array([[features[col] for col in feature_columns]])
+    
+    print(f"🔢 Características extraídas: {len(feature_columns)} features")
+    print(f"📋 Features disponibles: {feature_columns}")
     
     return features_array, feature_columns
 
@@ -377,12 +544,12 @@ def predict_corners(equipo_local_id, equipo_visitante_id):
             'corners_totales': None
         }
     
-    # Obtener datos del último partido
-    match_data = get_last_match_data(equipo_local_id, equipo_visitante_id)
+    # Obtener datos promedio del enfrentamiento
+    match_data = get_average_match_data(equipo_local_id, equipo_visitante_id)
     
     if not match_data:
         return {
-            'error': 'No se encontraron datos históricos para este enfrentamiento',
+            'error': 'No se encontraron datos históricos para este enfrentamiento (promedio de partidos)',
             'corners_totales': None
         }
     
@@ -562,6 +729,155 @@ def predict_corners_endpoint():
         
     except Exception as e:
         return jsonify({'error': f'Error interno: {str(e)}'}), 500
+
+@app.route('/api/historical-data', methods=['POST'])
+def get_historical_data_endpoint():
+    """
+    Endpoint para obtener datos históricos de un enfrentamiento
+    """
+    try:
+        print("\n" + "=" * 80)
+        print("🌐 PETICIÓN RECIBIDA: /api/historical-data")
+        print("=" * 80)
+        
+        data = request.get_json()
+        
+        if not data:
+            print("❌ Error: No se recibieron datos")
+            return jsonify({'error': 'No se recibieron datos'}), 400
+        
+        equipo_local_id = data.get('equipo_local_id')
+        equipo_visitante_id = data.get('equipo_visitante_id')
+        
+        print(f"🏠 Equipo Local ID: {equipo_local_id}")
+        print(f"✈️ Equipo Visitante ID: {equipo_visitante_id}")
+        
+        if equipo_local_id is None or equipo_visitante_id is None:
+            print("❌ Error: Faltan IDs de equipos")
+            return jsonify({'error': 'Faltan IDs de equipos'}), 400
+        
+        # Obtener datos históricos de resultados
+        result_data = get_average_result_data(equipo_local_id, equipo_visitante_id)
+        
+        # Obtener datos históricos de corners
+        corners_data = get_average_match_data(equipo_local_id, equipo_visitante_id)
+        
+        # Obtener estadísticas del enfrentamiento
+        enfrentamiento_data = get_enfrentamiento_stats(equipo_local_id, equipo_visitante_id)
+        
+        # Preparar respuesta con datos históricos
+        response = {
+            'resultados_historicos': {
+                'ataques_local_promedio': float(result_data.get('ataques_local', 0)) if result_data else 0,
+                'ataques_visitante_promedio': float(result_data.get('ataques_visitante', 0)) if result_data else 0,
+                'posesion_local_promedio': float(result_data.get('posesion_local', 0)) if result_data else 50,
+                'posesion_visitante_promedio': float(result_data.get('posesion_visitante', 0)) if result_data else 50,
+                'corners_local_promedio': float(result_data.get('corners_local', 0)) if result_data else 0,
+                'corners_visitante_promedio': float(result_data.get('corners_visitante', 0)) if result_data else 0,
+                'num_partidos_resultados': int(result_data.get('num_partidos', 0)) if result_data else 0
+            },
+            'corners_historicos': {
+                'corners_promedio_hist': float(corners_data.get('corners_vs_rival_hist', 0)) if corners_data else 0,
+                'num_partidos_corners': int(corners_data.get('num_partidos', 0)) if corners_data else 0
+            },
+            'enfrentamiento_historico': {
+                'total_partidos': int(enfrentamiento_data.get('total_partidos', 0)) if enfrentamiento_data else 0,
+                'posesion_local_promedio': float(enfrentamiento_data.get('posesion_local_promedio', 0)) if enfrentamiento_data else 50,
+                'posesion_visitante_promedio': float(enfrentamiento_data.get('posesion_visitante_promedio', 0)) if enfrentamiento_data else 50,
+                'corners_promedio': float(enfrentamiento_data.get('corners_promedio', 0)) if enfrentamiento_data else 0,
+                'goles_promedio': float(enfrentamiento_data.get('goles_promedio', 0)) if enfrentamiento_data else 0,
+                'tarjetas_promedio': float(enfrentamiento_data.get('tarjetas_promedio', 0)) if enfrentamiento_data else 0,
+                'victorias_local': int(enfrentamiento_data.get('victorias_local', 0)) if enfrentamiento_data else 0,
+                'victorias_visitante': int(enfrentamiento_data.get('victorias_visitante', 0)) if enfrentamiento_data else 0,
+                'empates': int(enfrentamiento_data.get('empates', 0)) if enfrentamiento_data else 0
+            }
+        }
+        
+        print(f"📊 Datos históricos obtenidos: {response['resultados_historicos']['num_partidos_resultados']} partidos resultados, {response['corners_historicos']['num_partidos_corners']} partidos corners")
+        
+        return jsonify(response), 200
+        
+    except Exception as e:
+        return jsonify({'error': f'Error interno: {str(e)}'}), 500
+
+def get_enfrentamiento_stats(equipo_local_id, equipo_visitante_id):
+    """
+    Obtener estadísticas del enfrentamiento histórico entre dos equipos
+    """
+    connection = get_db_connection()
+    if not connection:
+        return None
+    
+    try:
+        with connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cursor:
+            # Primero obtener todos los partidos entre los dos equipos
+            sql = """
+            SELECT * FROM resultado_historico_tabla 
+            WHERE (equipo_local_id = %s AND equipo_visitante_id = %s) OR 
+                  (equipo_local_id = %s AND equipo_visitante_id = %s)
+            """
+            cursor.execute(sql, (equipo_local_id, equipo_visitante_id, equipo_visitante_id, equipo_local_id))
+            partidos = cursor.fetchall()
+            
+            if not partidos:
+                print("❌ No se encontraron partidos históricos para este enfrentamiento")
+                return None
+            
+            print(f"📊 Encontrados {len(partidos)} partidos totales entre ambos equipos")
+            
+            # Calcular estadísticas
+            total_partidos = len(partidos)
+            posesion_local_total = 0
+            posesion_visitante_total = 0
+            corners_total = 0
+            goles_total = 0
+            tarjetas_total = 0
+            victorias_local = 0
+            victorias_visitante = 0
+            empates = 0
+            
+            for partido in partidos:
+                # Posesión (convertir de decimal a porcentaje)
+                posesion_local_total += float(partido['posesion_local']) * 100
+                posesion_visitante_total += float(partido['posesion_visitante']) * 100
+                
+                # Corners totales (suma de local + visitante)
+                corners_total += float(partido['corners_local']) + float(partido['corners_visitante'])
+                
+                # Goles totales (suma de local + visitante)
+                goles_total += float(partido['goles_local']) + float(partido['goles_visitante'])
+                
+                # Tarjetas totales
+                tarjetas_total += float(partido['tarjetas_totales'])
+                
+                # Victorias
+                if partido['resultado_1x2'] == 1:
+                    victorias_local += 1
+                elif partido['resultado_1x2'] == 2:
+                    victorias_visitante += 1
+                else:
+                    empates += 1
+            
+            # Calcular promedios
+            result = {
+                'total_partidos': total_partidos,
+                'posesion_local_promedio': posesion_local_total / total_partidos,
+                'posesion_visitante_promedio': posesion_visitante_total / total_partidos,
+                'corners_promedio': corners_total / (total_partidos * 2),  # Dividir por 2 porque sumamos local + visitante
+                'goles_promedio': goles_total / (total_partidos * 2),      # Dividir por 2 porque sumamos local + visitante
+                'tarjetas_promedio': tarjetas_total / (total_partidos * 2), # Dividir por 2 porque tarjetas_totales ya es el total
+                'victorias_local': victorias_local,
+                'victorias_visitante': victorias_visitante,
+                'empates': empates
+            }
+            
+            return result
+            
+    except Exception as e:
+        print(f"Error en consulta de enfrentamiento: {e}")
+        return None
+    finally:
+        connection.close()
 
 @app.route('/api/health', methods=['GET'])
 def health_check():
