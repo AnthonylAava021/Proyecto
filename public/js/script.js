@@ -77,8 +77,8 @@ const cornersTotalesEl = $("#cornersTotales");
 
 const notice  = $("#notice");
 
-// fija el fondo sin importar dónde esté
-bgDiv.style.backgroundImage = `url('./img/${BG_FILE}')`;
+// El fondo ahora se maneja por el slideshow
+// bgDiv.style.backgroundImage = `url('./img/${BG_FILE}')`;
 
 // opciones por defecto
 const TEAM_NAMES = Object.keys(equipos_dict);

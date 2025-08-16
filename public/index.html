@@ -2,7 +2,7 @@
 <html lang="es">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>UPSBet — Predicción de Partidos</title>
     <link rel="stylesheet" href="css/styles.css" />
   </head>
@@ -10,11 +10,20 @@
     <!-- Fondo -->
     <div class="bg"></div>
     <div class="bg-gradient"></div>
+    
+    <!-- Audio de fondo -->
+    <audio id="background-music" loop>
+      <source src="audio/cancion_liga_pro_pagina.mp4" type="audio/mp4">
+      <source src="audio/cancion_liga_pro_pagina.mp4" type="audio/mpeg">
+      Tu navegador no soporta el elemento de audio.
+    </audio>
 
-    <header class="wrap header">
-      <h1 class="brand">UPS<span class="brand-accent">BET</span></h1>
-      <div class="model-pill">Modelo: <strong>ML Classifier</strong> <span class="badge on">ON</span></div>
-    </header>
+          <header class="wrap header">
+        <h1 class="brand">UPS<span class="brand-accent">BET</span></h1>
+        <div class="model-pill">
+          Modelo: <strong>ML Classifier</strong> <span class="badge on">ON</span>
+        </div>
+      </header>
 
     <main class="wrap">
       <section class="card">
@@ -176,9 +185,12 @@
         </div>
       </section>
 
-      <p class="legal">* Visual de ejemplo. Conecta tu API para resultados reales. Juega con responsabilidad.</p>
+      <p class="legal">Juega con responsabilidad. En UPSBET no nos responsabilizamos por pérdidas de dinero :) </p>
+      <p class="legal">Las predicciones tienen un margen de error de +- 0.90 </p>
     </main>
 
-    <script src="js/script.js"></script>
-  </body>
-</html>
+              <script src="js/script.js"></script>
+          <script src="js/background-slideshow.js"></script>
+          <script src="js/background-music.js"></script>
+        </body>
+        </html>
