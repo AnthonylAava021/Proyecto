@@ -73,11 +73,7 @@ const pctHome = $("#pctHome");
 const pctDraw = $("#pctDraw");
 const pctAway = $("#pctAway");
 const scoreEl = $("#score");
-
-// NUEVOS: elementos para Córners y Tarjetas
 const cornersTotalesEl = $("#cornersTotales");
-const cardsHomeEl   = $("#cardsHome");
-const cardsAwayEl   = $("#cardsAway");
 
 const notice  = $("#notice");
 
@@ -157,24 +153,42 @@ async function predict(){
   notice.classList.add("hide");
   try{
     const payload = {
-      home_name: homeSel.value,
-      away_name: awaySel.value,
-      home_code: equipos_dict[homeSel.value],
-      away_code: equipos_dict[awaySel.value]
+      equipo_local_id: equipos_dict[homeSel.value],
+      equipo_visitante_id: equipos_dict[awaySel.value]
     };
 
-    const res = await fetch(API_ENDPOINT, {
+    // Hacer predicción de resultado
+    const resResultado = await fetch("/api/predict", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
     });
     
-    if(!res.ok) {
-      throw new Error(`HTTP ${res.status}`);
+    if(!resResultado.ok) {
+      throw new Error(`HTTP ${resResultado.status}`);
     }
     
-    const data = await res.json();
-    renderResults(data);
+    const dataResultado = await resResultado.json();
+    
+    // Hacer predicción de corners
+    const resCorners = await fetch("/api/predict-corners", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    
+    let dataCorners = null;
+    if(resCorners.ok) {
+      dataCorners = await resCorners.json();
+    }
+    
+    // Combinar resultados
+    const combinedData = {
+      ...dataResultado,
+      corners_data: dataCorners
+    };
+    
+    renderResults(combinedData);
   } catch(e){
     console.error(e);
     showNotice("Error conectando con el servidor. Verifica que el backend esté funcionando.");
@@ -205,30 +219,72 @@ function renderResults(res){
     pctDraw.textContent = "—";
     pctAway.textContent = "—";
     scoreEl.textContent = "—";
-    if (cornersTotalesEl) cornersTotalesEl.textContent = "—";
-    if (cardsHomeEl) cardsHomeEl.textContent = "—";
-    if (cardsAwayEl) cardsAwayEl.textContent = "—";
+    cornersTotalesEl.textContent = "—";
     return;
   }
 
-  // Solo mostrar corners si hay predicción exitosa
-  if (res.corners_totales !== null && res.corners_totales !== undefined) {
-    const cornersTotales = Math.round(res.corners_totales);
-    if (cornersTotalesEl) cornersTotalesEl.textContent = cornersTotales;
+  // Mostrar resultado del partido
+  if (res.goles_local && res.goles_visitante) {
+    const golesLocal = res.goles_local.rounded;
+    const golesVisitante = res.goles_visitante.rounded;
+    
+    // Mostrar marcador
+    scoreEl.textContent = `${golesLocal} - ${golesVisitante}`;
+    
+    // Determinar probabilidades basadas en el resultado
+    let homeProb = 0, drawProb = 0, awayProb = 0;
+    
+    if (res.resultado_1x2 === 1) {
+      homeProb = 0.6;
+      drawProb = 0.25;
+      awayProb = 0.15;
+    } else if (res.resultado_1x2 === 0) {
+      homeProb = 0.25;
+      drawProb = 0.5;
+      awayProb = 0.25;
+    } else {
+      homeProb = 0.15;
+      drawProb = 0.25;
+      awayProb = 0.6;
+    }
+    
+    // Actualizar barras de probabilidad
+    barHome.style.width = `${homeProb * 100}%`;
+    barDraw.style.width = `${drawProb * 100}%`;
+    barAway.style.width = `${awayProb * 100}%`;
+    
+    pctHome.textContent = `${Math.round(homeProb * 100)}%`;
+    pctDraw.textContent = `${Math.round(drawProb * 100)}%`;
+    pctAway.textContent = `${Math.round(awayProb * 100)}%`;
+    
+    // Mostrar información adicional
+    console.log(`Predicción: ${homeSel.value} ${golesLocal} - ${golesVisitante} ${awaySel.value}`);
+    console.log(`Resultado: ${res.resultado_1x2 === 1 ? 'Local' : res.resultado_1x2 === 0 ? 'Empate' : 'Visitante'}`);
+    console.log(`Fecha de corte: ${res.as_of}`);
+    console.log(`Modelo usado: ${res.model_type} (${res.model_version})`);
+    console.log(`Nota: ${res.prediction_note}`);
+    
+    // Mostrar corners si están disponibles
+    if (res.corners_data && res.corners_data.corners_totales) {
+      cornersTotalesEl.textContent = Math.round(res.corners_data.corners_totales);
+      console.log(`Corners totales: ${res.corners_data.corners_totales}`);
+      console.log(`Modelo de corners: ${res.corners_data.model_type} (${res.corners_data.model_version})`);
+      console.log(`Escalador: ${res.corners_data.scaler_type}`);
+      console.log(`Nota corners: ${res.corners_data.prediction_note}`);
+    } else {
+      cornersTotalesEl.textContent = "—";
+    }
   } else {
-    if (cornersTotalesEl) cornersTotalesEl.textContent = "—";
+    // Limpiar si no hay datos
+    barHome.style.width = "0%";
+    barDraw.style.width = "0%";
+    barAway.style.width = "0%";
+    pctHome.textContent = "—";
+    pctDraw.textContent = "—";
+    pctAway.textContent = "—";
+    scoreEl.textContent = "—";
+    cornersTotalesEl.textContent = "—";
   }
-
-  // Los otros campos se mantienen vacíos ya que no tenemos esos modelos
-  barHome.style.width = "0%";
-  barDraw.style.width = "0%";
-  barAway.style.width = "0%";
-  pctHome.textContent = "—";
-  pctDraw.textContent = "—";
-  pctAway.textContent = "—";
-  scoreEl.textContent = "—";
-  if (cardsHomeEl) cardsHomeEl.textContent = "—";
-  if (cardsAwayEl) cardsAwayEl.textContent = "—";
 }
 
 // Utilidad
