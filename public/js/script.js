@@ -177,6 +177,13 @@ async function predict(){
       body: JSON.stringify(payload)
     });
     
+    // Hacer predicción de tarjetas
+    const resTarjetas = await fetch("/api/predict-tarjetas", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    
     // Obtener datos históricos
     const resHistoricos = await fetch("/api/historical-data", {
       method: "POST",
@@ -189,6 +196,11 @@ async function predict(){
       dataCorners = await resCorners.json();
     }
     
+    let dataTarjetas = null;
+    if(resTarjetas.ok) {
+      dataTarjetas = await resTarjetas.json();
+    }
+    
     let dataHistoricos = null;
     if(resHistoricos.ok) {
       dataHistoricos = await resHistoricos.json();
@@ -198,6 +210,7 @@ async function predict(){
     const combinedData = {
       ...dataResultado,
       corners_data: dataCorners,
+      tarjetas_data: dataTarjetas,
       historicos: dataHistoricos
     };
     
@@ -233,6 +246,7 @@ function renderResults(res){
     pctAway.textContent = "—";
     scoreEl.textContent = "—";
     cornersTotalesEl.textContent = "—";
+    document.getElementById('tarjetasTotales').textContent = "—";
     return;
   }
 
@@ -286,6 +300,16 @@ function renderResults(res){
       console.log(`Nota corners: ${res.corners_data.prediction_note}`);
     } else {
       cornersTotalesEl.textContent = "—";
+    }
+    
+    // Mostrar tarjetas si están disponibles
+    if (res.tarjetas_data && res.tarjetas_data.tarjetas_totales) {
+      document.getElementById('tarjetasTotales').textContent = Math.round(res.tarjetas_data.tarjetas_totales);
+      console.log(`Tarjetas totales: ${res.tarjetas_data.tarjetas_totales}`);
+      console.log(`Modelo de tarjetas: ${res.tarjetas_data.model_type} (${res.tarjetas_data.model_version})`);
+      console.log(`Nota tarjetas: ${res.tarjetas_data.prediction_note}`);
+    } else {
+      document.getElementById('tarjetasTotales').textContent = "—";
     }
     
     // Mostrar datos históricos si están disponibles

@@ -45,6 +45,12 @@ def load_models():
             model_corners = pickle.load(f)
         print(f"✅ Modelo de corners cargado: {type(model_corners).__name__}")
         
+        # Cargar modelo de tarjetas
+        print("🟨 Cargando modelo de predicción de tarjetas...")
+        with open('modelos/modelo_lightgbm_final.pkl', 'rb') as f:
+            model_tarjetas = pickle.load(f)
+        print(f"✅ Modelo de tarjetas cargado: {type(model_tarjetas).__name__}")
+        
         # Cargar escalador de corners
         print("🔧 Cargando escalador de datos...")
         with open('modelos/escalador_corners.pkl', 'rb') as f:
@@ -55,13 +61,13 @@ def load_models():
         print("🎯 TODOS LOS MODELOS CARGADOS EXITOSAMENTE")
         print("=" * 50)
         
-        return model_resultados, model_corners, scaler_corners
+        return model_resultados, model_corners, model_tarjetas, scaler_corners
     except Exception as e:
         print(f"❌ Error cargando modelos: {e}")
         print(f"❌ Tipo de error: {type(e)}")
-        return None, None, None
+        return None, None, None, None
 
-model_resultados, model_corners, scaler_corners = load_models()
+model_resultados, model_corners, model_tarjetas, scaler_corners = load_models()
 
 def get_db_connection():
     """Crear conexión a la base de datos PostgreSQL"""
@@ -481,6 +487,77 @@ def get_average_match_data(equipo_local_id, equipo_visitante_id):
     finally:
         connection.close()
 
+def get_average_tarjetas_data(equipo_local_id, equipo_visitante_id):
+    """
+    Obtener el promedio de todos los registros de tarjetas de un enfrentamiento específico
+    """
+    connection = get_db_connection()
+    if not connection:
+        return None
+    
+    try:
+        with connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cursor:
+            # Buscar enfrentamiento directo y calcular promedios
+            sql = """
+            SELECT 
+                AVG(loc_for_prev5) as loc_for_prev5,
+                AVG(loc_against_prev5) as loc_against_prev5,
+                AVG(loc_for_prev10) as loc_for_prev10,
+                AVG(loc_against_prev10) as loc_against_prev10,
+                AVG(vis_for_prev5) as vis_for_prev5,
+                AVG(vis_against_prev5) as vis_against_prev5,
+                AVG(vis_for_prev10) as vis_for_prev10,
+                AVG(vis_against_prev10) as vis_against_prev10,
+                AVG(diff_for_prev5) as diff_for_prev5,
+                AVG(diff_against_prev5) as diff_against_prev5,
+                AVG(diff_for_prev10) as diff_for_prev10,
+                AVG(diff_against_prev10) as diff_against_prev10,
+                COUNT(*) as num_partidos
+            FROM tarjetas_tabla 
+            WHERE equipo_local_id = %s AND equipo_visitante_id = %s
+            """
+            cursor.execute(sql, (equipo_local_id, equipo_visitante_id))
+            result = cursor.fetchone()
+            
+            if result and result['num_partidos'] > 0:
+                print(f"🟨 Encontrados {result['num_partidos']} partidos directos de tarjetas")
+                return dict(result)
+            
+            # Si no existe, buscar enfrentamiento inverso y calcular promedios
+            sql = """
+            SELECT 
+                AVG(loc_for_prev5) as loc_for_prev5,
+                AVG(loc_against_prev5) as loc_against_prev5,
+                AVG(loc_for_prev10) as loc_for_prev10,
+                AVG(loc_against_prev10) as loc_against_prev10,
+                AVG(vis_for_prev5) as vis_for_prev5,
+                AVG(vis_against_prev5) as vis_against_prev5,
+                AVG(vis_for_prev10) as vis_for_prev10,
+                AVG(vis_against_prev10) as vis_against_prev10,
+                AVG(diff_for_prev5) as diff_for_prev5,
+                AVG(diff_against_prev5) as diff_against_prev5,
+                AVG(diff_for_prev10) as diff_for_prev10,
+                AVG(diff_against_prev10) as diff_against_prev10,
+                COUNT(*) as num_partidos
+            FROM tarjetas_tabla 
+            WHERE equipo_local_id = %s AND equipo_visitante_id = %s
+            """
+            cursor.execute(sql, (equipo_visitante_id, equipo_local_id))
+            result = cursor.fetchone()
+            
+            if result and result['num_partidos'] > 0:
+                print(f"🟨 Encontrados {result['num_partidos']} partidos inversos de tarjetas")
+                return dict(result)
+            
+            print("❌ No se encontraron partidos históricos de tarjetas para este enfrentamiento")
+            return None
+            
+    except Exception as e:
+        print(f"Error en consulta de tarjetas: {e}")
+        return None
+    finally:
+        connection.close()
+
 def prepare_corners_features(match_data):
     """
     Preparar características para el modelo de corners
@@ -522,6 +599,51 @@ def prepare_corners_features(match_data):
     features_array = np.array([[features[col] for col in feature_columns]])
     
     print(f"🔢 Características extraídas: {len(feature_columns)} features")
+    print(f"📋 Features disponibles: {feature_columns}")
+    
+    return features_array, feature_columns
+
+def prepare_tarjetas_features(match_data, equipo_local_id, equipo_visitante_id):
+    """
+    Preparar características para el modelo de tarjetas
+    """
+    if not match_data:
+        return None, None
+    
+    # Columnas que realmente existen en la tabla de tarjetas
+    expected_columns = [
+        'loc_for_prev5',
+        'loc_against_prev5',
+        'loc_for_prev10',
+        'loc_against_prev10',
+        'vis_for_prev5',
+        'vis_against_prev5',
+        'vis_for_prev10',
+        'vis_against_prev10',
+        'diff_for_prev5',
+        'diff_against_prev5',
+        'diff_for_prev10',
+        'diff_against_prev10'
+    ]
+    
+    # Extraer características específicas
+    features = {}
+    for col in expected_columns:
+        if col in match_data and match_data[col] is not None:
+            features[col] = float(match_data[col])
+        else:
+            # Valor por defecto si no existe
+            features[col] = 0.0
+    
+    # Agregar IDs de equipos como características adicionales
+    features['equipo_local_id'] = float(equipo_local_id)
+    features['equipo_visitante_id'] = float(equipo_visitante_id)
+    
+    # Ordenar características para mantener consistencia
+    feature_columns = sorted(features.keys())
+    features_array = np.array([[features[col] for col in feature_columns]])
+    
+    print(f"🟨 Características de tarjetas extraídas: {len(feature_columns)} features")
     print(f"📋 Features disponibles: {feature_columns}")
     
     return features_array, feature_columns
@@ -608,6 +730,75 @@ def predict_corners(equipo_local_id, equipo_visitante_id):
         return {
             'error': f'Error en predicción de corners: {str(e)}',
             'corners_totales': None
+        }
+
+def predict_tarjetas(equipo_local_id, equipo_visitante_id):
+    """
+    Predecir tarjetas totales del partido
+    """
+    # Verificar que el modelo esté cargado
+    if model_tarjetas is None:
+        return {
+            'error': '❌ El modelo de tarjetas no está disponible. Verifica que el archivo modelo_lightgbm_final.pkl existe y es válido.',
+            'tarjetas_totales': None
+        }
+    
+    # Verificar que no sean el mismo equipo
+    if equipo_local_id == equipo_visitante_id:
+        return {
+            'error': 'Los equipos local y visitante no pueden ser iguales',
+            'tarjetas_totales': None
+        }
+    
+    # Obtener datos promedio del enfrentamiento
+    match_data = get_average_tarjetas_data(equipo_local_id, equipo_visitante_id)
+    
+    if not match_data:
+        return {
+            'error': 'No se encontraron datos históricos de tarjetas para este enfrentamiento (promedio de partidos)',
+            'tarjetas_totales': None
+        }
+    
+    # Preparar características
+    features, feature_columns = prepare_tarjetas_features(match_data, equipo_local_id, equipo_visitante_id)
+    
+    if features is None:
+        return {
+            'error': 'Error preparando características para el modelo de tarjetas',
+            'tarjetas_totales': None
+        }
+    
+    try:
+        print("=" * 60)
+        print("🟨 REALIZANDO PREDICCIÓN DE TARJETAS")
+        print("=" * 60)
+        print(f"📊 Modelo de tarjetas: {type(model_tarjetas).__name__}")
+        print(f"🔢 Características enviadas: {features.shape[1]} features")
+        print(f"📋 Features: {feature_columns}")
+        print("-" * 60)
+        
+        # Hacer predicción (sin escalador para tarjetas)
+        print("🟨 Prediciendo tarjetas totales...")
+        prediction = model_tarjetas.predict(features)
+        tarjetas_totales = float(prediction[0])
+        print(f"✅ Tarjetas totales predichas: {tarjetas_totales:.2f}")
+        
+        print("-" * 60)
+        print(f"🎯 Predicción final: {tarjetas_totales:.1f} tarjetas totales")
+        print("=" * 60)
+        
+        return {
+            'tarjetas_totales': tarjetas_totales,
+            'model_type': type(model_tarjetas).__name__,
+            'model_version': 'tarjetas_v1',
+            'prediction_note': '✅ Predicción de tarjetas generada usando modelo de Machine Learning real',
+            'features_used': feature_columns
+        }
+        
+    except Exception as e:
+        return {
+            'error': f'Error en predicción de tarjetas: {str(e)}',
+            'tarjetas_totales': None
         }
 
 @app.route('/api/predict', methods=['POST'])
@@ -721,6 +912,57 @@ def predict_corners_endpoint():
             'model_version': 'corners_v1',
             'model_type': type(model_corners).__name__,
             'scaler_type': type(scaler_corners).__name__,
+            'features_used': result.get('features_used', []),
+            'prediction_note': '✅ Predicción generada usando modelo de Machine Learning real'
+        }
+        
+        return jsonify(response), 200
+        
+    except Exception as e:
+        return jsonify({'error': f'Error interno: {str(e)}'}), 500
+
+@app.route('/api/predict-tarjetas', methods=['POST'])
+def predict_tarjetas_endpoint():
+    """
+    Endpoint para predicción de tarjetas
+    Recibe: {equipo_local_id, equipo_visitante_id}
+    Devuelve: predicción de tarjetas totales
+    """
+    try:
+        print("\n" + "=" * 80)
+        print("🌐 PETICIÓN RECIBIDA: /api/predict-tarjetas")
+        print("=" * 80)
+        
+        data = request.get_json()
+        
+        if not data:
+            print("❌ Error: No se recibieron datos")
+            return jsonify({'error': 'No se recibieron datos'}), 400
+        
+        equipo_local_id = data.get('equipo_local_id')
+        equipo_visitante_id = data.get('equipo_visitante_id')
+        
+        print(f"🏠 Equipo Local ID: {equipo_local_id}")
+        print(f"✈️ Equipo Visitante ID: {equipo_visitante_id}")
+        
+        if equipo_local_id is None or equipo_visitante_id is None:
+            print("❌ Error: Faltan IDs de equipos")
+            return jsonify({'error': 'Faltan IDs de equipos'}), 400
+        
+        # Hacer predicción de tarjetas
+        result = predict_tarjetas(equipo_local_id, equipo_visitante_id)
+        
+        if 'error' in result:
+            return jsonify({
+                'error': result['error'],
+                'tarjetas_totales': None
+            }), 400
+        
+        # Preparar respuesta
+        response = {
+            'tarjetas_totales': result['tarjetas_totales'],
+            'model_version': 'tarjetas_v1',
+            'model_type': type(model_tarjetas).__name__,
             'features_used': result.get('features_used', []),
             'prediction_note': '✅ Predicción generada usando modelo de Machine Learning real'
         }
@@ -896,6 +1138,11 @@ def health_check():
                 'type': type(model_corners).__name__ if model_corners else None,
                 'file': 'modelos/prediccion_corners_totales.pkl'
             },
+            'tarjetas_model': {
+                'loaded': model_tarjetas is not None,
+                'type': type(model_tarjetas).__name__ if model_tarjetas else None,
+                'file': 'modelos/modelo_lightgbm_final.pkl'
+            },
             'corners_scaler': {
                 'loaded': scaler_corners is not None,
                 'type': type(scaler_corners).__name__ if scaler_corners else None,
@@ -921,6 +1168,7 @@ if __name__ == '__main__':
     print("=" * 60)
     print(f"✅ Modelo de resultados: {'CARGADO' if model_resultados else 'NO CARGADO'}")
     print(f"✅ Modelo de corners: {'CARGADO' if model_corners else 'NO CARGADO'}")
+    print(f"✅ Modelo de tarjetas: {'CARGADO' if model_tarjetas else 'NO CARGADO'}")
     print(f"✅ Escalador de corners: {'CARGADO' if scaler_corners else 'NO CARGADO'}")
     print("=" * 60)
     print("🌐 Servidor disponible en: http://localhost:5000")
