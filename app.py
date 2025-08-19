@@ -33,38 +33,38 @@ def load_models():
         print("=" * 50)
         
         # Cargar modelo de resultados
-        print("📊 Cargando modelo de predicción de resultados...")
+        print("Cargando modelo de predicción de resultados...")
         modelo_dict = joblib.load('modelos/modelo_ligapro.pkl')
         model_resultados = modelo_dict  # Guardamos todo el diccionario
-        print(f"✅ Modelo de resultados cargado: {type(modelo_dict).__name__}")
-        print(f"✅ Contiene: {list(modelo_dict.keys())}")
+        print(f"Modelo de resultados cargado: {type(modelo_dict).__name__}")
+        print(f"Contiene: {list(modelo_dict.keys())}")
         
         # Cargar modelo de corners
-        print("⚽ Cargando modelo de predicción de corners...")
+        print("Cargando modelo de predicción de corners...")
         with open('modelos/prediccion_corners_totales.pkl', 'rb') as f:
             model_corners = pickle.load(f)
-        print(f"✅ Modelo de corners cargado: {type(model_corners).__name__}")
+        print(f"Modelo de corners cargado: {type(model_corners).__name__}")
         
         # Cargar modelo de tarjetas
-        print("🟨 Cargando modelo de predicción de tarjetas...")
+        print("Cargando modelo de predicción de tarjetas...")
         with open('modelos/modelo_lightgbm_final.pkl', 'rb') as f:
             model_tarjetas = pickle.load(f)
-        print(f"✅ Modelo de tarjetas cargado: {type(model_tarjetas).__name__}")
+        print(f"Modelo de tarjetas cargado: {type(model_tarjetas).__name__}")
         
         # Cargar escalador de corners
-        print("🔧 Cargando escalador de datos...")
+        print("Cargando escalador de datos...")
         with open('modelos/escalador_corners.pkl', 'rb') as f:
             scaler_corners = pickle.load(f)
-        print(f"✅ Escalador cargado: {type(scaler_corners).__name__}")
+        print(f"Escalador cargado: {type(scaler_corners).__name__}")
         
         print("=" * 50)
-        print("🎯 TODOS LOS MODELOS CARGADOS EXITOSAMENTE")
+        print("TODOS LOS MODELOS CARGADOS EXITOSAMENTE")
         print("=" * 50)
         
         return model_resultados, model_corners, model_tarjetas, scaler_corners
     except Exception as e:
-        print(f"❌ Error cargando modelos: {e}")
-        print(f"❌ Tipo de error: {type(e)}")
+        print(f"Error cargando modelos: {e}")
+        print(f"Tipo de error: {type(e)}")
         return None, None, None, None
 
 model_resultados, model_corners, model_tarjetas, scaler_corners = load_models()
@@ -173,7 +173,7 @@ def get_average_result_data(equipo_local_id, equipo_visitante_id, fecha_corte=No
             result = cursor.fetchone()
             
             if result and result['num_partidos'] > 0:
-                print(f"📊 Encontrados {result['num_partidos']} partidos directos (resultados)")
+                print(f"Encontrados {result['num_partidos']} partidos directos (resultados)")
                 return dict(result)
             
             # Si no existe, buscar enfrentamiento inverso y calcular promedios
@@ -224,10 +224,10 @@ def get_average_result_data(equipo_local_id, equipo_visitante_id, fecha_corte=No
             result = cursor.fetchone()
             
             if result and result['num_partidos'] > 0:
-                print(f"📊 Encontrados {result['num_partidos']} partidos inversos (resultados)")
+                print(f"Encontrados {result['num_partidos']} partidos inversos (resultados)")
                 return dict(result)
             
-            print("❌ No se encontraron partidos históricos para este enfrentamiento (resultados)")
+            print("No se encontraron partidos históricos para este enfrentamiento (resultados)")
             return None
             
     except Exception as e:
@@ -308,8 +308,8 @@ def prepare_features(equipo_local_id, equipo_visitante_id, fecha_corte=None):
     
     features_array = np.array([[features[col] for col in expected_features]])
     
-    print(f"🔢 Características extraídas: {len(expected_features)} features")
-    print(f"📋 Features disponibles: {expected_features}")
+    print(f"Características extraídas: {len(expected_features)} features")
+    print(f"Features disponibles: {expected_features}")
     
     return features_array, expected_features
     
@@ -322,7 +322,7 @@ def predict_match_result(equipo_local_id, equipo_visitante_id, fecha_corte=None)
     # Verificar que el modelo esté cargado
     if model_resultados is None:
         return {
-            'error': '❌ El modelo de predicción de resultados no está disponible. Verifica que el archivo modelo_ligapro.pkl existe y es válido.',
+            'error': 'El modelo de predicción de resultados no está disponible. Verifica que el archivo modelo_ligapro.pkl existe y es válido.',
             'goles_local': None,
             'goles_visitante': None,
             'resultado_1x2': None
@@ -354,25 +354,25 @@ def predict_match_result(equipo_local_id, equipo_visitante_id, fecha_corte=None)
         model_gv = model_resultados['model_gv']
         
         print("=" * 60)
-        print("🎯 REALIZANDO PREDICCIÓN DE RESULTADO")
+        print("REALIZANDO PREDICCIÓN DE RESULTADO")
         print("=" * 60)
-        print(f"📊 Modelo Local (goles): {type(model_gl).__name__}")
-        print(f"📊 Modelo Visitante (goles): {type(model_gv).__name__}")
-        print(f"🔢 Características enviadas: {features.shape[1]} features")
-        print(f"📋 Features: {feature_columns}")
+        print(f"Modelo Local (goles): {type(model_gl).__name__}")
+        print(f"Modelo Visitante (goles): {type(model_gv).__name__}")
+        print(f"Características enviadas: {features.shape[1]} features")
+        print(f"Features: {feature_columns}")
         print("-" * 60)
         
         # Predecir goles local y visitante por separado
-        print("⚽ Prediciendo goles local...")
+        print("Prediciendo goles local...")
         goles_local_raw = float(model_gl.predict(features)[0])
-        print(f"✅ Goles local (raw): {goles_local_raw:.4f}")
+        print(f"Goles local (raw): {goles_local_raw:.4f}")
         
-        print("⚽ Prediciendo goles visitante...")
+        print("Prediciendo goles visitante...")
         goles_visitante_raw = float(model_gv.predict(features)[0])
-        print(f"✅ Goles visitante (raw): {goles_visitante_raw:.4f}")
+        print(f"Goles visitante (raw): {goles_visitante_raw:.4f}")
         
         print("-" * 60)
-        print(f"🎯 Predicción final: {round(goles_local_raw)} - {round(goles_visitante_raw)}")
+        print(f"Predicción final: {round(goles_local_raw)} - {round(goles_visitante_raw)}")
         print("=" * 60)
         
         # Redondear para obtener marcador entero
@@ -475,10 +475,10 @@ def get_average_match_data(equipo_local_id, equipo_visitante_id):
             result = cursor.fetchone()
             
             if result and result['num_partidos'] > 0:
-                print(f"📊 Encontrados {result['num_partidos']} partidos inversos")
+                print(f"Encontrados {result['num_partidos']} partidos inversos")
                 return dict(result)
             
-            print("❌ No se encontraron partidos históricos para este enfrentamiento")
+            print("No se encontraron partidos históricos para este enfrentamiento")
             return None
             
     except Exception as e:
@@ -520,7 +520,7 @@ def get_average_tarjetas_data(equipo_local_id, equipo_visitante_id):
             result = cursor.fetchone()
             
             if result and result['num_partidos'] > 0:
-                print(f"🟨 Encontrados {result['num_partidos']} partidos directos de tarjetas")
+                print(f"Encontrados {result['num_partidos']} partidos directos de tarjetas")
                 return dict(result)
             
             # Si no existe, buscar enfrentamiento inverso y calcular promedios
@@ -546,10 +546,10 @@ def get_average_tarjetas_data(equipo_local_id, equipo_visitante_id):
             result = cursor.fetchone()
             
             if result and result['num_partidos'] > 0:
-                print(f"🟨 Encontrados {result['num_partidos']} partidos inversos de tarjetas")
+                print(f"Encontrados {result['num_partidos']} partidos inversos de tarjetas")
                 return dict(result)
             
-            print("❌ No se encontraron partidos históricos de tarjetas para este enfrentamiento")
+            print("No se encontraron partidos históricos de tarjetas para este enfrentamiento")
             return None
             
     except Exception as e:
@@ -598,8 +598,8 @@ def prepare_corners_features(match_data):
     feature_columns = sorted(features.keys())
     features_array = np.array([[features[col] for col in feature_columns]])
     
-    print(f"🔢 Características extraídas: {len(feature_columns)} features")
-    print(f"📋 Features disponibles: {feature_columns}")
+    print(f"Características extraídas: {len(feature_columns)} features")
+    print(f"Features disponibles: {feature_columns}")
     
     return features_array, feature_columns
 
@@ -643,8 +643,8 @@ def prepare_tarjetas_features(match_data, equipo_local_id, equipo_visitante_id):
     feature_columns = sorted(features.keys())
     features_array = np.array([[features[col] for col in feature_columns]])
     
-    print(f"🟨 Características de tarjetas extraídas: {len(feature_columns)} features")
-    print(f"📋 Features disponibles: {feature_columns}")
+    print(f"Características de tarjetas extraídas: {len(feature_columns)} features")
+    print(f"Features disponibles: {feature_columns}")
     
     return features_array, feature_columns
 
@@ -655,7 +655,7 @@ def predict_corners(equipo_local_id, equipo_visitante_id):
     # Verificar que los modelos estén cargados
     if model_corners is None or scaler_corners is None:
         return {
-            'error': '❌ Los modelos de corners no están disponibles. Verifica que los archivos prediccion_corners_totales.pkl y escalador_corners.pkl existen y son válidos.',
+            'error': 'Los modelos de corners no están disponibles. Verifica que los archivos prediccion_corners_totales.pkl y escalador_corners.pkl existen y son válidos.',
             'corners_totales': None
         }
     
@@ -686,18 +686,18 @@ def predict_corners(equipo_local_id, equipo_visitante_id):
     
     try:
         print("=" * 60)
-        print("⚽ REALIZANDO PREDICCIÓN DE CORNERS")
+        print("REALIZANDO PREDICCIÓN DE CORNERS")
         print("=" * 60)
-        print(f"📊 Modelo de corners: {type(model_corners).__name__}")
-        print(f"🔧 Escalador: {type(scaler_corners).__name__}")
-        print(f"🔢 Características enviadas: {features.shape[1]} features")
-        print(f"📋 Features: {feature_columns}")
+        print(f"Modelo de corners: {type(model_corners).__name__}")
+        print(f"Escalador: {type(scaler_corners).__name__}")
+        print(f"Características enviadas: {features.shape[1]} features")
+        print(f"Features: {feature_columns}")
         print("-" * 60)
         
         # Escalar características
-        print("🔧 Escalando características...")
+        print("Escalando características...")
         features_scaled = scaler_corners.transform(features)
-        print(f"✅ Características escaladas: {features_scaled.shape}")
+        print(f"Características escaladas: {features_scaled.shape}")
         
         # Agregar IDs de equipos (no escalados)
         equipo_local_array = np.array([[equipo_local_id]])
@@ -705,16 +705,16 @@ def predict_corners(equipo_local_id, equipo_visitante_id):
         
         # Combinar características escaladas con IDs
         features_final = np.hstack([features_scaled, equipo_local_array, equipo_visitante_array])
-        print(f"✅ Características finales: {features_final.shape}")
+        print(f"Características finales: {features_final.shape}")
         
         # Hacer predicción
-        print("⚽ Prediciendo corners totales...")
+        print("Prediciendo corners totales...")
         prediction = model_corners.predict(features_final)
         corners_totales = float(prediction[0])
-        print(f"✅ Corners totales predichos: {corners_totales:.2f}")
+        print(f"Corners totales predichos: {corners_totales:.2f}")
         
         print("-" * 60)
-        print(f"🎯 Predicción final: {corners_totales:.1f} corners totales")
+        print(f"Predicción final: {corners_totales:.1f} corners totales")
         print("=" * 60)
         
         return {
@@ -722,7 +722,7 @@ def predict_corners(equipo_local_id, equipo_visitante_id):
             'model_type': type(model_corners).__name__,
             'model_version': 'corners_v1',
             'scaler_type': type(scaler_corners).__name__,
-            'prediction_note': '✅ Predicción de corners generada usando modelo de Machine Learning real',
+            'prediction_note': 'Predicción de corners generada usando modelo de Machine Learning real',
             'features_used': feature_columns
         }
         
@@ -739,7 +739,7 @@ def predict_tarjetas(equipo_local_id, equipo_visitante_id):
     # Verificar que el modelo esté cargado
     if model_tarjetas is None:
         return {
-            'error': '❌ El modelo de tarjetas no está disponible. Verifica que el archivo modelo_lightgbm_final.pkl existe y es válido.',
+            'error': 'El modelo de tarjetas no está disponible. Verifica que el archivo modelo_lightgbm_final.pkl existe y es válido.',
             'tarjetas_totales': None
         }
     
@@ -770,28 +770,28 @@ def predict_tarjetas(equipo_local_id, equipo_visitante_id):
     
     try:
         print("=" * 60)
-        print("🟨 REALIZANDO PREDICCIÓN DE TARJETAS")
+        print("REALIZANDO PREDICCIÓN DE TARJETAS")
         print("=" * 60)
-        print(f"📊 Modelo de tarjetas: {type(model_tarjetas).__name__}")
-        print(f"🔢 Características enviadas: {features.shape[1]} features")
-        print(f"📋 Features: {feature_columns}")
+        print(f"Modelo de tarjetas: {type(model_tarjetas).__name__}")
+        print(f"Características enviadas: {features.shape[1]} features")
+        print(f"Features: {feature_columns}")
         print("-" * 60)
         
         # Hacer predicción (sin escalador para tarjetas)
-        print("🟨 Prediciendo tarjetas totales...")
+        print("Prediciendo tarjetas totales...")
         prediction = model_tarjetas.predict(features)
         tarjetas_totales = float(prediction[0])
-        print(f"✅ Tarjetas totales predichas: {tarjetas_totales:.2f}")
+        print(f"Tarjetas totales predichas: {tarjetas_totales:.2f}")
         
         print("-" * 60)
-        print(f"🎯 Predicción final: {tarjetas_totales:.1f} tarjetas totales")
+        print(f"Predicción final: {tarjetas_totales:.1f} tarjetas totales")
         print("=" * 60)
         
         return {
             'tarjetas_totales': tarjetas_totales,
             'model_type': type(model_tarjetas).__name__,
             'model_version': 'tarjetas_v1',
-            'prediction_note': '✅ Predicción de tarjetas generada usando modelo de Machine Learning real',
+            'prediction_note': 'Predicción de tarjetas generada usando modelo de Machine Learning real',
             'features_used': feature_columns
         }
         
@@ -810,25 +810,25 @@ def predict():
     """
     try:
         print("\n" + "=" * 80)
-        print("🌐 PETICIÓN RECIBIDA: /api/predict")
+        print("PETICIÓN RECIBIDA: /api/predict")
         print("=" * 80)
         
         data = request.get_json()
         
         if not data:
-            print("❌ Error: No se recibieron datos")
+            print("Error: No se recibieron datos")
             return jsonify({'error': 'No se recibieron datos'}), 400
         
         equipo_local_id = data.get('equipo_local_id')
         equipo_visitante_id = data.get('equipo_visitante_id')
         fecha_request = data.get('fecha')  # Opcional
         
-        print(f"🏠 Equipo Local ID: {equipo_local_id}")
-        print(f"✈️ Equipo Visitante ID: {equipo_visitante_id}")
-        print(f"📅 Fecha Request: {fecha_request}")
+        print(f"Equipo Local ID: {equipo_local_id}")
+        print(f"quipo Visitante ID: {equipo_visitante_id}")
+        print(f"Fecha Request: {fecha_request}")
         
         if equipo_local_id is None or equipo_visitante_id is None:
-            print("❌ Error: Faltan IDs de equipos")
+            print("Error: Faltan IDs de equipos")
             return jsonify({'error': 'Faltan IDs de equipos'}), 400
         
         # Determinar fecha de corte
@@ -861,7 +861,7 @@ def predict():
             'model_type': type(model_resultados).__name__,
             'features_used': result.get('features_used', []),
             'cut_note': f'Predicción calculada solo con datos anteriores a {fecha_corte}',
-            'prediction_note': '✅ Predicción generada usando modelo de Machine Learning real'
+            'prediction_note': 'Predicción generada usando modelo de Machine Learning real'
         }
         
         return jsonify(response), 200
@@ -878,23 +878,23 @@ def predict_corners_endpoint():
     """
     try:
         print("\n" + "=" * 80)
-        print("🌐 PETICIÓN RECIBIDA: /api/predict-corners")
+        print("PETICIÓN RECIBIDA: /api/predict-corners")
         print("=" * 80)
         
         data = request.get_json()
         
         if not data:
-            print("❌ Error: No se recibieron datos")
+            print("Error: No se recibieron datos")
             return jsonify({'error': 'No se recibieron datos'}), 400
         
         equipo_local_id = data.get('equipo_local_id')
         equipo_visitante_id = data.get('equipo_visitante_id')
         
-        print(f"🏠 Equipo Local ID: {equipo_local_id}")
-        print(f"✈️ Equipo Visitante ID: {equipo_visitante_id}")
+        print(f"Equipo Local ID: {equipo_local_id}")
+        print(f"Equipo Visitante ID: {equipo_visitante_id}")
         
         if equipo_local_id is None or equipo_visitante_id is None:
-            print("❌ Error: Faltan IDs de equipos")
+            print("Error: Faltan IDs de equipos")
             return jsonify({'error': 'Faltan IDs de equipos'}), 400
         
         # Hacer predicción de corners
@@ -913,7 +913,7 @@ def predict_corners_endpoint():
             'model_type': type(model_corners).__name__,
             'scaler_type': type(scaler_corners).__name__,
             'features_used': result.get('features_used', []),
-            'prediction_note': '✅ Predicción generada usando modelo de Machine Learning real'
+            'prediction_note': 'Predicción generada usando modelo de Machine Learning real'
         }
         
         return jsonify(response), 200
@@ -930,23 +930,23 @@ def predict_tarjetas_endpoint():
     """
     try:
         print("\n" + "=" * 80)
-        print("🌐 PETICIÓN RECIBIDA: /api/predict-tarjetas")
+        print("PETICIÓN RECIBIDA: /api/predict-tarjetas")
         print("=" * 80)
         
         data = request.get_json()
         
         if not data:
-            print("❌ Error: No se recibieron datos")
+            print("Error: No se recibieron datos")
             return jsonify({'error': 'No se recibieron datos'}), 400
         
         equipo_local_id = data.get('equipo_local_id')
         equipo_visitante_id = data.get('equipo_visitante_id')
         
-        print(f"🏠 Equipo Local ID: {equipo_local_id}")
-        print(f"✈️ Equipo Visitante ID: {equipo_visitante_id}")
+        print(f"Equipo Local ID: {equipo_local_id}")
+        print(f"Equipo Visitante ID: {equipo_visitante_id}")
         
         if equipo_local_id is None or equipo_visitante_id is None:
-            print("❌ Error: Faltan IDs de equipos")
+            print("Error: Faltan IDs de equipos")
             return jsonify({'error': 'Faltan IDs de equipos'}), 400
         
         # Hacer predicción de tarjetas
@@ -964,7 +964,7 @@ def predict_tarjetas_endpoint():
             'model_version': 'tarjetas_v1',
             'model_type': type(model_tarjetas).__name__,
             'features_used': result.get('features_used', []),
-            'prediction_note': '✅ Predicción generada usando modelo de Machine Learning real'
+            'prediction_note': ' Predicción generada usando modelo de Machine Learning real'
         }
         
         return jsonify(response), 200
@@ -979,23 +979,23 @@ def get_historical_data_endpoint():
     """
     try:
         print("\n" + "=" * 80)
-        print("🌐 PETICIÓN RECIBIDA: /api/historical-data")
+        print("PETICIÓN RECIBIDA: /api/historical-data")
         print("=" * 80)
         
         data = request.get_json()
         
         if not data:
-            print("❌ Error: No se recibieron datos")
+            print("Error: No se recibieron datos")
             return jsonify({'error': 'No se recibieron datos'}), 400
         
         equipo_local_id = data.get('equipo_local_id')
         equipo_visitante_id = data.get('equipo_visitante_id')
         
-        print(f"🏠 Equipo Local ID: {equipo_local_id}")
-        print(f"✈️ Equipo Visitante ID: {equipo_visitante_id}")
+        print(f"Equipo Local ID: {equipo_local_id}")
+        print(f"Equipo Visitante ID: {equipo_visitante_id}")
         
         if equipo_local_id is None or equipo_visitante_id is None:
-            print("❌ Error: Faltan IDs de equipos")
+            print("Error: Faltan IDs de equipos")
             return jsonify({'error': 'Faltan IDs de equipos'}), 400
         
         # Obtener datos históricos de resultados
@@ -1035,7 +1035,7 @@ def get_historical_data_endpoint():
             }
         }
         
-        print(f"📊 Datos históricos obtenidos: {response['resultados_historicos']['num_partidos_resultados']} partidos resultados, {response['corners_historicos']['num_partidos_corners']} partidos corners")
+        print(f"Datos históricos obtenidos: {response['resultados_historicos']['num_partidos_resultados']} partidos resultados, {response['corners_historicos']['num_partidos_corners']} partidos corners")
         
         return jsonify(response), 200
         
@@ -1062,10 +1062,10 @@ def get_enfrentamiento_stats(equipo_local_id, equipo_visitante_id):
             partidos = cursor.fetchall()
             
             if not partidos:
-                print("❌ No se encontraron partidos históricos para este enfrentamiento")
+                print("No se encontraron partidos históricos para este enfrentamiento")
                 return None
             
-            print(f"📊 Encontrados {len(partidos)} partidos totales entre ambos equipos")
+            print(f"Encontrados {len(partidos)} partidos totales entre ambos equipos")
             
             # Calcular estadísticas
             total_partidos = len(partidos)
@@ -1164,13 +1164,13 @@ def static_files(filename):
 
 if __name__ == '__main__':
     print("=" * 60)
-    print("🚀 INICIANDO SERVIDOR UPSBet")
+    print("INICIANDO SERVIDOR UPSBet")
     print("=" * 60)
-    print(f"✅ Modelo de resultados: {'CARGADO' if model_resultados else 'NO CARGADO'}")
-    print(f"✅ Modelo de corners: {'CARGADO' if model_corners else 'NO CARGADO'}")
-    print(f"✅ Modelo de tarjetas: {'CARGADO' if model_tarjetas else 'NO CARGADO'}")
-    print(f"✅ Escalador de corners: {'CARGADO' if scaler_corners else 'NO CARGADO'}")
+    print(f"Modelo de resultados: {'CARGADO' if model_resultados else 'NO CARGADO'}")
+    print(f"Modelo de corners: {'CARGADO' if model_corners else 'NO CARGADO'}")
+    print(f"Modelo de tarjetas: {'CARGADO' if model_tarjetas else 'NO CARGADO'}")
+    print(f"Escalador de corners: {'CARGADO' if scaler_corners else 'NO CARGADO'}")
     print("=" * 60)
-    print("🌐 Servidor disponible en: http://localhost:5000")
+    print("Servidor disponible en: http://localhost:5000")
     print("=" * 60)
     app.run(debug=True, host='0.0.0.0', port=5000)
