@@ -20,15 +20,10 @@ const equipos_dict = {
   'Vinotinto': 22
 };
 
-// =======================
-//  Configuración de rutas
-// =======================
-// Si tus imágenes están junto a index.html, deja "./".
-// Si las mueves a ./assets/, cambia a "./assets/".
+//Configuración de rutas
 const ASSETS_BASE = "./img/";
-const API_ENDPOINT = "/api/predict"; // cambia si tu backend vive en otro lado
+const API_ENDPOINT = "/api/predict"; 
 
-// Nombres de archivo EXACTOS (según tu carpeta)
 const NAME_TO_FILE = {
   "Barcelona SC": "Barcelona_Sporting_Club_Logo.png",
   "El Nacional": "Nacional.png",
@@ -48,12 +43,9 @@ const NAME_TO_FILE = {
   "Vinotinto": "Vinotinto.png"
 };
 
-// fondo (tu archivo se llama bg.jpg)
+
 const BG_FILE = "bg.jpg";
 
-// =======================
-//  Helpers UI
-// =======================
 const $ = (sel, root = document) => root.querySelector(sel);
 
 const bgDiv   = $(".bg");
@@ -77,15 +69,12 @@ const cornersTotalesEl = $("#cornersTotales");
 
 const notice  = $("#notice");
 
-// El fondo ahora se maneja por el slideshow
-// bgDiv.style.backgroundImage = `url('./img/${BG_FILE}')`;
 
-// opciones por defecto
 const TEAM_NAMES = Object.keys(equipos_dict);
 const DEFAULT_HOME = "Emelec";
 const DEFAULT_AWAY = "Barcelona SC";
 
-// Rellena selects respetando el diccionario
+
 function populateSelects(){
   TEAM_NAMES.forEach(name => {
     const o1 = document.createElement("option");
@@ -99,7 +88,7 @@ function populateSelects(){
 }
 populateSelects();
 
-// devuelve la ruta exacta según tu carpeta
+
 function teamLogo(name){
   const file = NAME_TO_FILE[name];
   return file ? ASSETS_BASE + file : "";
@@ -143,9 +132,7 @@ swapBtn.addEventListener("click", () => {
   updateLogosAndLabels();
 });
 
-// =======================
 //  Predicción
-// =======================
 predictBtn.addEventListener("click", predict);
 
 async function predict(){
